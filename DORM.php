@@ -2,7 +2,7 @@
 /*
  * 	$DB = new Dorm();
  *	$produtos = $DB->table('produtos')->all();
- *  0.9
+ * 	0.9
  *
  */
 
