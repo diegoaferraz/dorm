@@ -2,6 +2,7 @@
 /*
  * 	$DB = new Dorm();
  *	$produtos = $DB->table('produtos')->all();
+ *  0.9
  *
  */
 
@@ -106,8 +107,11 @@ class Dorm {
 
 	function group($column) {
 
-		$this->sql .= " group by $column ";
+		$prefix = preg_match("/group by/", $this->sql) ? "," : " group by ";
+
+		$this->sql .= $prefix." $column";
 		return $this;
+
 	}
 
 	function having($column, $value, $operator=null) {
