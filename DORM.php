@@ -1,11 +1,4 @@
 <?php
-/*
- * 	$DB = new Dorm();
- *	$produtos = $DB->table('produtos')->all();
- * 	0.9
- *
- */
-
 class Dorm {
 
 	private $table, $pdo, $sql;
@@ -168,48 +161,44 @@ class Dorm {
 		return $this;
 	}
 
-	function cont($column=null, $condition=null) {
+	function cont($column=null) {
 
 		$column = isset($column) ? $column : 'id';
-		if ($condition) $condition = preg_match("/where/", $condition) ? $condition : ' where '.$condition;
 
-		$this->sql = "select count($column) as total from $this->table $condition";
+		self::prefix();
+  		$this->sql = str_replace('select *', 'select count('.$column.') as total ', $this->sql);
 
 		return $this->get()[0]->total;
 	}
 
-	function max($column, $condition=null) {
+	function max($column) {
 
-		if ($condition) $condition = preg_match("/where/", $condition) ? $condition : ' where '.$condition;
-
-		$this->sql = "select max($column) as max from $this->table $condition";
+		self::prefix();
+  		$this->sql = str_replace('select *', 'select max('.$column.') as max ', $this->sql);
 
 		return $this->get()[0]->max;
 	}
 
-	function min($column, $condition=null) {
+	function min($column) {
 
-		if ($condition) $condition = preg_match("/where/", $condition) ? $condition : ' where '.$condition;
-
-		$this->sql = "select min($column) as min from $this->table $condition";
+		self::prefix();
+  		$this->sql = str_replace('select *', 'select min('.$column.') as min ', $this->sql);
 
 		return $this->get()[0]->min;
 	}
 
-	function avg($column, $condition=null) {
+	function avg($column) {
 
-		if ($condition) $condition = preg_match("/where/", $condition) ? $condition : ' where '.$condition;
-
-		$this->sql = "select avg($column) as avg from $this->table $condition";
+		self::prefix();
+  		$this->sql = str_replace('select *', 'select avg('.$column.') as avg ', $this->sql);
 
 		return $this->get()[0]->avg;
 	}
 
-	function sum($column, $condition=null) {
+	function sum($column) {
 
-		if ($condition) $condition = preg_match("/where/", $condition) ? $condition : ' where '.$condition;
-
-		$this->sql = "select sum($column) as sum from $this->table $condition";
+  		self::prefix();
+  		$this->sql = str_replace('select *', 'select sum('.$column.') as sum ', $this->sql);
 
 		return $this->get()[0]->sum;
 	}
@@ -250,7 +239,11 @@ class Dorm {
 
 		$column = isset($column) ? $column : 'status';
 
-		$this->sql = " select * from $this->table where $column=1 ";
+		$this->sql = " select * from $this->table ";
+
+		self::statement();
+
+		$this->sql .= " $column = 1 ";
 
 		return $this;
 	}
