@@ -1,36 +1,36 @@
 <?php
-class Dorm {
+class DB {
 
-	private $table, $pdo, $sql;
+	private static $table, $pdo, $sql;
 
   	public function __construct() {
 
-		$this->pdo = Conexao::conectar();
+		self::$pdo = Conexao::conectar();
   	}
 
-  	function table($table) {
+  	static function table($table) {
 
-  		$this->table = $table;
-  		return $this;
+  		self::$table = $table;
+  		return new self;
   	}
 
-  	function prefix() {
+  	static function prefix() {
 
-  		$prefix = preg_match("/select/", $this->sql) ? "" : "select * from $this->table ";
-  		$this->sql = $prefix.$this->sql;
-  		return $this;
+  		$prefix = preg_match("/select/", self::$sql) ? "" : "select * from ".self::$table;
+  		self::$sql = $prefix.self::$sql;
+  		return new self;
   	}
 
-  	function get() {
+  	static function get() {
 
   		self::prefix();
 
 		try {
 
-			$qry = $this->pdo->prepare($this->sql);
+			$qry = self::$pdo->prepare(self::$sql);
 			$qry->execute();
 
-			$this->sql = null;
+			self::$sql = null;
 
 			return $qry->fetchAll(PDO::FETCH_OBJ);
 
@@ -40,15 +40,15 @@ class Dorm {
 		}
 	}
 
-  	function pluck($column) {
+  	static function pluck($column) {
 
   		self::prefix();
 
-  		$this->sql = str_replace('select *', 'select '.$column, $this->sql);
+  		self::$sql = str_replace('select *', 'select '.$column, self::$sql);
 
 		try {
 
-			$qry = $this->pdo->prepare($this->sql);
+			$qry = self::$pdo->prepare(self::$sql);
 			$qry->execute();
 
 			$dados = $qry->fetchAll(PDO::FETCH_OBJ);
@@ -60,7 +60,7 @@ class Dorm {
 				$collection[] = $dado->{$column};
 			}
 
-			$this->sql = null;
+			self::$sql = null;
 
 			return ($qry->rowCount()>0) ? $collection : null;
 
@@ -70,18 +70,18 @@ class Dorm {
 		}
 	}
 
-  	function count() {
+  	static function count() {
 
   		self::prefix();
 
   		try {
 
-			$qry = $this->pdo->prepare($this->sql);
+			$qry = self::$pdo->prepare(self::$sql);
 			$qry->execute();
 
 			$dados = $qry->fetchAll(PDO::FETCH_OBJ);
 
-			$this->sql = null;
+			self::$sql = null;
 
 			return $qry->rowCount();
 
@@ -91,316 +91,322 @@ class Dorm {
 		}
 	}
 
-	function toSql() {
+	static function toSql() {
 
 		self::prefix();
-		echo $this->sql;
-		$this->sql = null;
+		echo self::$sql;
+		self::$sql = null;
 	}
 
-	function group($column) {
+	static function group($column) {
 
-		$prefix = preg_match("/group by/", $this->sql) ? "," : " group by ";
+		$prefix = preg_match("/group by/", self::$sql) ? "," : " group by ";
 
-		$this->sql .= $prefix." $column";
-		return $this;
+		self::$sql .= $prefix." $column";
+		return new self;
 
 	}
 
-	function having($column, $value, $operator=null) {
+	static function having($column, $value, $operator=null) {
 
 		$o = isset($operator) ? $value : '=';
 		$v = isset($operator) ? $operator : $value;
 
-		$this->sql .= " having $column $o '$v' ";
-		return $this;
+		self::$sql .= " having $column $o '$v' ";
+		return new self;
 	}
 
-	function order($column=null, $value='asc') {
+	static function order($column=null, $value='asc') {
 
 		$column = isset($column) ? $column : ' ordem ';
 
-		$prefix = preg_match("/order by/", $this->sql) ? "," : " order by ";
+		$prefix = preg_match("/order by/", self::$sql) ? "," : " order by ";
 
-		$this->sql .= $prefix." $column $value ";
-		return $this;
+		self::$sql .= $prefix." $column $value ";
+		return new self;
 	}
 
-	function rand() {
+	static function rand() {
 
-		$this->sql .= " order by rand() ";
-		return $this;
+		self::$sql .= " order by rand() ";
+		return new self;
 	}
 
-	function first() {
+	static function random() {
 
-		$this->sql .= " limit 0,1 ";
-		return $this->get()[0];
+		self::$sql .= " order by random() ";
+		return new self;
 	}
 
-	function limit($limit, $offset=null) {
+	static function first() {
+
+		self::$sql .= " limit 1 offset 0 ";
+		return self::get()[0];
+	}
+
+	static function limit($limit, $offset=null) {
 
 		$o = isset($offset) ? $limit : 0;
 		$l = isset($offset) ? $offset : $limit;
 
-		$this->sql .= " limit $o, $l ";
-		return $this;
+		self::$sql .= " limit $l offset $o ";
+		return new self;
 	}
 
-	function offset($start) {
+	static function offset($start) {
 
-		$this->sql .= " limit 18446744073709551615 offset $start ";
-		return $this;
+		self::$sql .= " limit 18446744073709551615 offset $start ";
+		return new self;
 	}
 
-	function select($columns='*') {
+	static function select($columns='*') {
 
 		if ($columns!='*') $columns = is_array($columns) ? implode(',', $columns) : $columns;
 
-		$this->sql = "select $columns from $this->table ";
-		return $this;
+		self::$sql = "select $columns from ".self::$table." ";
+		return new self;
 	}
 
-	function cont($column=null) {
+	static function cont($column=null) {
 
 		$column = isset($column) ? $column : 'id';
 
 		self::prefix();
-  		$this->sql = str_replace('select *', 'select count('.$column.') as total ', $this->sql);
+  		self::$sql = str_replace('select *', 'select count('.$column.') as total ', self::$sql);
 
-		return $this->get()[0]->total;
+		return self::get()[0]->total;
 	}
 
-	function max($column) {
+	static function max($column) {
 
 		self::prefix();
-  		$this->sql = str_replace('select *', 'select max('.$column.') as max ', $this->sql);
+  		self::$sql = str_replace('select *', 'select max('.$column.') as max ', self::$sql);
 
-		return $this->get()[0]->max;
+		return self::get()[0]->max;
 	}
 
-	function min($column) {
+	static function min($column) {
 
 		self::prefix();
-  		$this->sql = str_replace('select *', 'select min('.$column.') as min ', $this->sql);
+  		self::$sql = str_replace('select *', 'select min('.$column.') as min ', self::$sql);
 
-		return $this->get()[0]->min;
+		return self::get()[0]->min;
 	}
 
-	function avg($column) {
+	static function avg($column) {
 
 		self::prefix();
-  		$this->sql = str_replace('select *', 'select avg('.$column.') as avg ', $this->sql);
+  		self::$sql = str_replace('select *', 'select avg('.$column.') as avg ', self::$sql);
 
-		return $this->get()[0]->avg;
+		return self::get()[0]->avg;
 	}
 
-	function sum($column) {
+	static function sum($column) {
 
   		self::prefix();
-  		$this->sql = str_replace('select *', 'select sum('.$column.') as sum ', $this->sql);
+  		self::$sql = str_replace('select *', 'select sum('.$column.') as sum ', self::$sql);
 
-		return $this->get()[0]->sum;
+		return self::get()[0]->sum;
 	}
 
-	function join($table, $column, $column2, $operator=null) {
+	static function join($table, $column, $column2, $operator=null) {
 
 		$o  = isset($operator) ? $column2 : '=';
 		$c2 = isset($operator) ? $operator : $column2;
 
-		$this->sql .= " inner join $table on $column $o $c2 ";
-		return $this;
+		self::$sql .= " inner join $table on $column $o $c2 ";
+		return new self;
 	}
 
-	function leftJoin($table, $column, $column2, $operator=null) {
+	static function leftJoin($table, $column, $column2, $operator=null) {
 
 		$o  = ($operator) ? $column2 : '=';
 		$c2 = ($operator) ?: $column2;
 
-		$this->sql .= " left join $table on $column $o $c2 ";
-		return $this;
+		self::$sql .= " left join $table on $column $o $c2 ";
+		return new self;
 	}
 
-	function rightJoin($table, $column, $column2, $operator=null) {
+	static function rightJoin($table, $column, $column2, $operator=null) {
 
 		$o  = ($operator) ? $column2 : '=';
 		$c2 = ($operator) ?: $column2;
 
-		$this->sql .= " right join $table on $column $o $c2 ";
-		return $this;
+		self::$sql .= " right join $table on $column $o $c2 ";
+		return new self;
 	}
 
-	function all() {
+	static function all() {
 
-		return $this->get();
+		return self::get();
 	}
 
-	function actives($column=null) {
+	static function actives($column=null) {
 
 		$column = isset($column) ? $column : 'status';
 
-		$this->sql = " select * from $this->table ";
+		self::$sql = " select * from ".self::$table." ";
 
 		self::statement();
 
-		$this->sql .= " $column = 1 ";
+		self::$sql .= " $column = 1 ";
 
-		return $this;
+		return new self;
 	}
 
-	function find($value, $column=null) {
+	static function find($value, $column=null) {
 
 		$v = isset($column) ? $column : $value;
 		$c = isset($column) ? $value : 'id';
 
-		$this->sql = " select * from $this->table where $c = '$v' ";
+		self::$sql = " select * from ".self::$table." where $c = '$v' ";
 
-		$cont = $this->pdo->query($this->sql)->rowCount();
+		$cont = self::$pdo->query(self::$sql)->rowCount();
 
 
-		return ($cont==1) ?$this->get()[0] : false;
+		return ($cont==1) ? self::get()[0] : false;
 
-		$this->sql = null;
+		self::$sql = null;
 	}
 
-	function statement( $operator = " and " ) {
+	static function statement( $operator = " and " ) {
 
-		$this->sql .= preg_match("/where/", $this->sql) ? $operator : " where ";
+		self::$sql .= preg_match("/where/", self::$sql) ? $operator : " where ";
 
-		return $this;
+		return new self;
 	}
 
-	function where($column, $value, $operator=null) {
+	static function where($column, $value, $operator=null) {
 
 		$o = isset($operator) ? $value : '=';
 		$v = isset($operator) ? $operator : $value;
 
 		self::statement();
 
-		$this->sql .= " $column $o '$v' ";
+		self::$sql .= " $column $o '$v' ";
 
-		return $this;
+		return new self;
 	}
 
-	function orWhere($column, $value, $operator=null) {
+	static function orWhere($column, $value, $operator=null) {
 
 		$o = isset($operator) ? $value : '=';
 		$v = isset($operator) ? $operator : $value;
 
 		self::statement("or");
 
-		$this->sql .= " $column $o '$v' ";
+		self::$sql .= " $column $o '$v' ";
 
-		return $this;
+		return new self;
 	}
 
-	function whereIn($column, $array=null) {
+	static function whereIn($column, $array=null) {
 
 		$c = isset($array) ? $column : 'id';
 		$a = isset($array) ? $array : $column;
 
 		self::statement();
 
-		$this->sql .= " $c in (".implode(',', $a).") ";
+		self::$sql .= " $c in (".implode(',', $a).") ";
 
-		return $this;
+		return new self;
 	}
 
-	function whereNotIn($column, $array=null) {
+	static function whereNotIn($column, $array=null) {
 
 		$c = isset($array) ? $column : 'id';
 		$a = isset($array) ? $array : $column;
 
 		self::statement();
 
-		$this->sql .= " $column not in (".implode(',', $a).") ";
+		self::$sql .= " $column not in (".implode(',', $a).") ";
 
-		return $this;
+		return new self;
 	}
 
-	function isNull($column, $operator=null) {
+	static function isNull($column, $operator=null) {
 
 		self::statement( $operator );
 
-		$this->sql .= " $column is null ";
+		self::$sql .= " $column is null ";
 
-		return $this;
+		return new self;
 	}
 
-	function isNotNull($column, $operator=null) {
+	static function isNotNull($column, $operator=null) {
 
 		self::statement( $operator );
 
-		$this->sql .= " $column is not null ";
+		self::$sql .= " $column is not null ";
 
-		return $this;
+		return new self;
 	}
 
 
-	function like($column, $value) {
+	static function like($column, $value) {
 
 		self::statement();
 
-		$this->sql .= " $column like '%$value%' ";
+		self::$sql .= " $column like '%$value%' ";
 
-		return $this;
+		return new self;
 	}
 
-	function startLike($column, $value) {
+	static function startLike($column, $value) {
 
 		self::statement();
 
-		$this->sql .= " $column like '$value%' ";
+		self::$sql .= " $column like '$value%' ";
 
-		return $this;
+		return new self;
 	}
 
-	function endLike($column, $value) {
+	static function endLike($column, $value) {
 
 		self::statement();
 
-		$this->sql .= " $column like '%$value' ";
+		self::$sql .= " $column like '%$value' ";
 
-		return $this;
+		return new self;
 	}
 
-	function between($column, $start, $end) {
+	static function between($column, $start, $end) {
 
 		self::statement();
 
-		$this->sql .= " $column between '$start' and '$end' ";
+		self::$sql .= " $column between '$start' and '$end' ";
 
-		return $this;
+		return new self;
 	}
 
-	function raw($statement) {
+	static function raw($statement) {
 
-		$this->sql = $statement;
-		return $this;
+		self::$sql = $statement;
+		return new self;
 	}
 
-	function whereRaw($statement) {
+	static function whereRaw($statement) {
 
-		if ($statement!=null) $this->sql .= $statement;
-		return $this;
+		if ($statement!=null) self::$sql .= $statement;
+		return new self;
 	}
 
-	function insert($request) {
+	static function insert($request) {
 
 		$values  = is_array($request) ? $request : (array)$request;
 		$columns = array_keys($values);
 
-	 	$sql  = "insert into $this->table (".implode(',', $columns).") values (:".implode(',:', $columns).")";
+	 	$sql  = "insert into ".self::$table." (".implode(',', $columns).") values (:".implode(',:', $columns).")";
 
 		try {
 
-			$qry = $this->pdo->prepare($sql);
+			$qry = self::$pdo->prepare($sql);
 
 			$commit = $qry->execute($values);
 
 			if ($commit) {
 
-				$response['id'] 	= (int)$this->pdo->lastInsertId();
+				$response['id'] 	= (int)self::$pdo->lastInsertId();
 				$response['result'] = true;
 			}
 			else {
@@ -416,7 +422,7 @@ class Dorm {
 		}
 	}
 
-	function update($request, $column=null, $operator=null, $value=null) {
+	static function update($request, $column=null, $operator=null, $value=null) {
 
 		$values = is_array($request) ? $request : (array)$request;
 		$fields = array_keys($values);
@@ -430,7 +436,7 @@ class Dorm {
 				$params .= $fields[$i].'=:'.$fields[$i].',';
 			}
 
-			$sql = "update $this->table set ".substr($params, 0, -1)." where ".$column." ".$operator." '".$value."'";
+			$sql = "update ".self::$table." set ".substr($params, 0, -1)." where ".$column." ".$operator." '".$value."'";
 		}
 		else {
 
@@ -439,12 +445,12 @@ class Dorm {
 				$params .= $fields[$i].'=:'.$fields[$i].',';
 			}
 
-			$sql = "update $this->table set ".substr($params, 0, -1)." where ".$fields[0].' = :'.$fields[0];
+			$sql = "update ".self::$table." set ".substr($params, 0, -1)." where ".$fields[0].' = :'.$fields[0];
 		}
 
 		try {
 
-			$qry = $this->pdo->prepare($sql);
+			$qry = self::$pdo->prepare($sql);
 
 			$commit = $qry->execute($values);
 
@@ -456,17 +462,17 @@ class Dorm {
 		}
 	}
 
-	function delete($value, $operator=null, $column=null) {
+	static function delete($value, $operator=null, $column=null) {
 
 		$v = isset($column) ? $column : ($operator ?: $value);
 		$o = isset($column) ? $operator : '=';
 		$c = isset($column) || isset($operator) ? $value : 'id';
 
-		$sql = "delete from $this->table where $c $o ?";
+		$sql = "delete from ".self::$table." where $c $o ?";
 
 		try {
 
-			$qry = $this->pdo->prepare($sql);
+			$qry = self::$pdo->prepare($sql);
 			$qry->bindParam(1, $v);
 
 			$commit = $qry->execute();
@@ -479,13 +485,13 @@ class Dorm {
 		}
 	}
 
-	function truncate() {
+	static function truncate() {
 
-		$sql = "truncate $this->table";
+		$sql = "truncate ".self::$table;
 
 		try {
 
-			$qry = $this->pdo->prepare($sql);
+			$qry = self::$pdo->prepare($sql);
 
 			$commit = $qry->execute();
 
