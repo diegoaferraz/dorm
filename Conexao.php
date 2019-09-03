@@ -1,20 +1,21 @@
 <?php
 class Conexao {
 
-	const DB_HOST    = 'localhost';
-	const DB_DRIVER  = 'pgsql';
-	const DB_NAME    = 'canalagricola';
-	const DB_USER    = 'postgres';
-	const DB_PASS    = '';
-	const DB_CHARSET = self::DB_DRIVER=='mysql' ? 'charset=utf8;' : '';
-	const DB_PORT    = null;
+	// const DB_HOST    = 'localhost';
+	// const DB_DRIVER  = 'pgsql';
+	// const DB_NAME    = 'dbname';
+	// const DB_USER    = 'dbuser';
+	// const DB_PASS    = '';
+	// const DB_CHARSET = self::DB_DRIVER=='mysql' ? 'charset=utf8;' : '';
+	// const DB_PORT    = null;
 
-	// const DB_HOST   = 'localhost';
-	// const DB_DRIVER = 'mysql';
-	// const DB_NAME   = 'loja';
-	// const DB_USER   = 'root';
-	// const DB_PASS   = '';
-	// const DB_PORT   = null;
+	const DB_HOST    = 'localhost';
+	const DB_DRIVER  = 'mysql';
+	const DB_NAME    = 'loja';
+	const DB_USER    = 'root';
+	const DB_PASS    = '';
+	const DB_PORT    = null;
+	const DB_CHARSET = self::DB_DRIVER=='mysql' ? 'charset=utf8;' : '';
 
 	private static $conexao;
 
