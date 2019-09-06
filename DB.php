@@ -16,7 +16,7 @@ class DB {
 
   	static function prefix() {
 
-  		$prefix = preg_match("/select/", self::$sql) ? "" : "select * from ".self::$table;
+  		$prefix = preg_match("/SELECT/", self::$sql) ? "" : "SELECT * FROM ".self::$table;
   		self::$sql = $prefix.self::$sql;
   		return new self;
   	}
@@ -44,7 +44,7 @@ class DB {
 
   		self::prefix();
 
-  		self::$sql = str_replace('select *', 'select '.$column, self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT '.$column, self::$sql);
 
 		try {
 
@@ -100,7 +100,7 @@ class DB {
 
 	static function group($column) {
 
-		$prefix = preg_match("/group by/", self::$sql) ? "," : " group by ";
+		$prefix = preg_match("/GROUP BY/", self::$sql) ? "," : " GROUP BY ";
 
 		self::$sql .= $prefix." $column";
 		return new self;
@@ -112,7 +112,7 @@ class DB {
 		$o = isset($operator) ? $value : '=';
 		$v = isset($operator) ? $operator : $value;
 
-		self::$sql .= " having $column $o '$v' ";
+		self::$sql .= " HAVING $column $o '$v' ";
 		return new self;
 	}
 
@@ -120,7 +120,7 @@ class DB {
 
 		$column = isset($column) ? $column : ' ordem ';
 
-		$prefix = preg_match("/order by/", self::$sql) ? "," : " order by ";
+		$prefix = preg_match("/ORDER BY/", self::$sql) ? "," : " ORDER BY ";
 
 		self::$sql .= $prefix." $column $value ";
 		return new self;
@@ -128,19 +128,25 @@ class DB {
 
 	static function rand() {
 
-		self::$sql .= " order by rand() ";
+		self::$sql .= " ORDER BY RAND() ";
 		return new self;
 	}
 
 	static function random() {
 
-		self::$sql .= " order by random() ";
+		self::$sql .= " ORDER BY RANDOM() ";
 		return new self;
 	}
 
-	static function first() {
+	static function first($column=null) {
 
-		self::$sql .= " limit 1 offset 0 ";
+		self::$sql .= (isset($column) ? " ORDER BY ".$column. " ASC " : "")." LIMIT 1 OFFSET 0";
+		return self::get()[0];
+	}
+
+	static function last($column=null) {
+
+		self::$sql .= " ORDER BY ".($column ?: "id"). " DESC LIMIT 1 OFFSET 0";
 		return self::get()[0];
 	}
 
@@ -149,13 +155,13 @@ class DB {
 		$o = isset($offset) ? $limit : 0;
 		$l = isset($offset) ? $offset : $limit;
 
-		self::$sql .= " limit $l offset $o ";
+		self::$sql .= " LIMIT $l OFFSET $o ";
 		return new self;
 	}
 
 	static function offset($start) {
 
-		self::$sql .= " limit 18446744073709551615 offset $start ";
+		self::$sql .= " LIMIT 18446744073709551615 OFFSET $start ";
 		return new self;
 	}
 
@@ -163,7 +169,7 @@ class DB {
 
 		if ($columns!='*') $columns = is_array($columns) ? implode(',', $columns) : $columns;
 
-		self::$sql = "select $columns from ".self::$table." ";
+		self::$sql = "SELECT $columns FROM ".self::$table." ";
 		return new self;
 	}
 
@@ -172,7 +178,7 @@ class DB {
 		$column = isset($column) ? $column : 'id';
 
 		self::prefix();
-  		self::$sql = str_replace('select *', 'select count('.$column.') as total ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT COUNT('.$column.') AS total ', self::$sql);
 
 		return self::get()[0]->total;
 	}
@@ -180,7 +186,7 @@ class DB {
 	static function max($column) {
 
 		self::prefix();
-  		self::$sql = str_replace('select *', 'select max('.$column.') as max ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT MAX('.$column.') AS max ', self::$sql);
 
 		return self::get()[0]->max;
 	}
@@ -188,7 +194,7 @@ class DB {
 	static function min($column) {
 
 		self::prefix();
-  		self::$sql = str_replace('select *', 'select min('.$column.') as min ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT MIN('.$column.') AS min ', self::$sql);
 
 		return self::get()[0]->min;
 	}
@@ -196,7 +202,7 @@ class DB {
 	static function avg($column) {
 
 		self::prefix();
-  		self::$sql = str_replace('select *', 'select avg('.$column.') as avg ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT AVG('.$column.') AS avg ', self::$sql);
 
 		return self::get()[0]->avg;
 	}
@@ -204,7 +210,7 @@ class DB {
 	static function sum($column) {
 
   		self::prefix();
-  		self::$sql = str_replace('select *', 'select sum('.$column.') as sum ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT SUM('.$column.') AS sum ', self::$sql);
 
 		return self::get()[0]->sum;
 	}
@@ -214,7 +220,7 @@ class DB {
 		$o  = isset($operator) ? $column2 : '=';
 		$c2 = isset($operator) ? $operator : $column2;
 
-		self::$sql .= " inner join $table on $column $o $c2 ";
+		self::$sql .= " INNER JOIN $table ON $column $o $c2 ";
 		return new self;
 	}
 
@@ -223,7 +229,7 @@ class DB {
 		$o  = ($operator) ? $column2 : '=';
 		$c2 = ($operator) ?: $column2;
 
-		self::$sql .= " left join $table on $column $o $c2 ";
+		self::$sql .= " LEFT JOIN $table ON $column $o $c2 ";
 		return new self;
 	}
 
@@ -232,7 +238,7 @@ class DB {
 		$o  = ($operator) ? $column2 : '=';
 		$c2 = ($operator) ?: $column2;
 
-		self::$sql .= " right join $table on $column $o $c2 ";
+		self::$sql .= " RIGHT JOIN $table ON $column $o $c2 ";
 		return new self;
 	}
 
@@ -245,7 +251,7 @@ class DB {
 
 		$column = isset($column) ? $column : 'status';
 
-		self::$sql = " select * from ".self::$table." ";
+		self::$sql = " SELECT * FROM ".self::$table." ";
 
 		self::statement();
 
@@ -259,19 +265,18 @@ class DB {
 		$v = isset($column) ? $column : $value;
 		$c = isset($column) ? $value : 'id';
 
-		self::$sql = " select * from ".self::$table." where $c = '$v' ";
+		self::$sql = " SELECT * FROM ".self::$table." WHERE $c = '$v' ";
 
 		$cont = self::$pdo->query(self::$sql)->rowCount();
-
 
 		return ($cont==1) ? self::get()[0] : false;
 
 		self::$sql = null;
 	}
 
-	static function statement( $operator = " and " ) {
+	static function statement( $operator = " AND " ) {
 
-		self::$sql .= preg_match("/where/", self::$sql) ? $operator : " where ";
+		self::$sql .= preg_match("/WHERE/", self::$sql) ? $operator : " WHERE ";
 
 		return new self;
 	}
@@ -293,7 +298,7 @@ class DB {
 		$o = isset($operator) ? $value : '=';
 		$v = isset($operator) ? $operator : $value;
 
-		self::statement("or");
+		self::statement("OR");
 
 		self::$sql .= " $column $o '$v' ";
 
@@ -307,7 +312,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $c in (".implode(',', $a).") ";
+		self::$sql .= " $c IN (".implode(',', $a).") ";
 
 		return new self;
 	}
@@ -319,7 +324,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column not in (".implode(',', $a).") ";
+		self::$sql .= " $column NOT IN (".implode(',', $a).") ";
 
 		return new self;
 	}
@@ -328,7 +333,7 @@ class DB {
 
 		self::statement( $operator );
 
-		self::$sql .= " $column is null ";
+		self::$sql .= " $column IS NULL ";
 
 		return new self;
 	}
@@ -337,7 +342,7 @@ class DB {
 
 		self::statement( $operator );
 
-		self::$sql .= " $column is not null ";
+		self::$sql .= " $column IS NOT NULL ";
 
 		return new self;
 	}
@@ -347,7 +352,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column like '%$value%' ";
+		self::$sql .= " $column LIKE '%$value%' ";
 
 		return new self;
 	}
@@ -356,7 +361,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column like '$value%' ";
+		self::$sql .= " $column LIKE '$value%' ";
 
 		return new self;
 	}
@@ -365,7 +370,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column like '%$value' ";
+		self::$sql .= " $column LIKE '%$value' ";
 
 		return new self;
 	}
@@ -374,7 +379,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column between '$start' and '$end' ";
+		self::$sql .= " $column BETWEEN '$start' AND '$end' ";
 
 		return new self;
 	}
@@ -396,7 +401,7 @@ class DB {
 		$values  = is_array($request) ? $request : (array)$request;
 		$columns = array_keys($values);
 
-	 	$sql  = "insert into ".self::$table." (".implode(',', $columns).") values (:".implode(',:', $columns).")";
+	 	$sql  = "INSERT INTO ".self::$table." (".implode(',', $columns).") VALUES (:".implode(',:', $columns).")";
 
 		try {
 
@@ -429,14 +434,28 @@ class DB {
 
 		$params = '';
 
-		if (isset($column) && isset($column)) {
+		self::prefix();
+
+		if (preg_match("/WHERE/", self::$sql)) {
 
 			for ($i=0; $i<count($fields); $i++) {
 
 				$params .= $fields[$i].'=:'.$fields[$i].',';
 			}
 
-			$sql = "update ".self::$table." set ".substr($params, 0, -1)." where ".$column." ".$operator." '".$value."'";
+			$statement = "UPDATE ".self::$table." SET ".substr($params, 0, -1);
+
+			$sql = preg_match("/SELECT */", self::$sql) ? str_replace("SELECT * FROM ".self::$table, $statement, self::$sql) : "";
+
+		}
+		elseif (isset($column) && isset($column)) {
+
+			for ($i=0; $i<count($fields); $i++) {
+
+				$params .= $fields[$i].'=:'.$fields[$i].',';
+			}
+
+			$sql = "UPDATE ".self::$table." SET ".substr($params, 0, -1)." WHERE ".$column." ".$operator." '".$value."'";
 		}
 		else {
 
@@ -445,7 +464,7 @@ class DB {
 				$params .= $fields[$i].'=:'.$fields[$i].',';
 			}
 
-			$sql = "update ".self::$table." set ".substr($params, 0, -1)." where ".$fields[0].' = :'.$fields[0];
+			$sql = "UPDATE ".self::$table." SET ".substr($params, 0, -1)." WHERE ".$fields[0].' = :'.$fields[0];
 		}
 
 		try {
@@ -462,18 +481,26 @@ class DB {
 		}
 	}
 
-	static function delete($value, $operator=null, $column=null) {
+	static function delete($value=null, $operator=null, $column=null) {
 
-		$v = isset($column) ? $column : ($operator ?: $value);
-		$o = isset($column) ? $operator : '=';
-		$c = isset($column) || isset($operator) ? $value : 'id';
 
-		$sql = "delete from ".self::$table." where $c $o ?";
+		if ($value) {
+
+			$v = isset($column) ? $column : ($operator ?: $value);
+			$o = isset($column) ? $operator : '=';
+			$c = isset($column) || isset($operator) ? $value : 'id';
+
+			$sql = "DELETE FROM ".self::$table." WHERE $c $o $v ";
+		}
+		else {
+
+			self::prefix();
+			$sql = preg_match("/SELECT */", self::$sql) ? str_replace("SELECT *", "DELETE", self::$sql) : "";
+		}
 
 		try {
 
 			$qry = self::$pdo->prepare($sql);
-			$qry->bindParam(1, $v);
 
 			$commit = $qry->execute();
 
@@ -487,7 +514,7 @@ class DB {
 
 	static function truncate() {
 
-		$sql = "truncate ".self::$table;
+		$sql = "TRUNCATE ".self::$table;
 
 		try {
 
