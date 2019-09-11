@@ -5,7 +5,8 @@ class DB {
 
   	public function __construct() {
 
-		self::$pdo = Conexao::conectar();
+  		$Conexao = new Conexao();
+		self::$pdo = $Conexao->conectar();
   	}
 
   	static function table($table) {
@@ -419,6 +420,8 @@ class DB {
 				$response['result'] = false;
 			}
 
+			self::$sql = null;
+
 			return (object)$response;
 
 		} catch (PDOException $e) {
@@ -473,6 +476,8 @@ class DB {
 
 			$commit = $qry->execute($values);
 
+			self::$sql = null;
+
 			return $commit ? true : false;
 
 		} catch (PDOException $e) {
@@ -482,7 +487,6 @@ class DB {
 	}
 
 	static function delete($value=null, $operator=null, $column=null) {
-
 
 		if ($value) {
 
@@ -503,6 +507,8 @@ class DB {
 			$qry = self::$pdo->prepare($sql);
 
 			$commit = $qry->execute();
+
+			self::$sql = null;
 
 			return $commit ? true : false;
 
