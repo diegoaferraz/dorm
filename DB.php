@@ -184,36 +184,44 @@ class DB {
 		return self::get()[0]->total;
 	}
 
-	static function max($column) {
+	static function max($column, $alias=null) {
+
+		$alias = isset($alias) ? $alias : 'max';
 
 		self::prefix();
-  		self::$sql = str_replace('SELECT *', 'SELECT MAX('.$column.') AS max ', self::$sql);
+  		echo self::$sql = str_replace('SELECT *', 'SELECT MAX('.$column.') AS '.$alias.' ', self::$sql);
 
-		return self::get()[0]->max;
+		return self::get()[0]->$alias;
 	}
 
-	static function min($column) {
+	static function min($column, $alias=null) {
+
+		$alias = isset($alias) ? $alias : 'min';
 
 		self::prefix();
-  		self::$sql = str_replace('SELECT *', 'SELECT MIN('.$column.') AS min ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT MIN('.$column.') AS '.$alias.' ', self::$sql);
 
-		return self::get()[0]->min;
+		return self::get()[0]->$alias;
 	}
 
-	static function avg($column) {
+	static function avg($column, $alias=null) {
+
+		$alias = isset($alias) ? $alias : 'avg';
 
 		self::prefix();
-  		self::$sql = str_replace('SELECT *', 'SELECT AVG('.$column.') AS avg ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT AVG('.$column.') AS '.$alias.' ', self::$sql);
 
-		return self::get()[0]->avg;
+		return self::get()[0]->$alias;
 	}
 
-	static function sum($column) {
+	static function sum($column, $alias=null) {
+
+		$alias = isset($alias) ? $alias : 'sum';
 
   		self::prefix();
-  		self::$sql = str_replace('SELECT *', 'SELECT SUM('.$column.') AS sum ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT SUM('.$column.') AS '.$name.' ', self::$sql);
 
-		return self::get()[0]->sum;
+		return self::get()[0]->$name;
 	}
 
 	static function join($table, $column, $column2, $operator=null) {
@@ -313,7 +321,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $c IN (".implode(',', $a).") ";
+		self::$sql .= " $c IN ('".implode('\',\'', $a)."') ";
 
 		return new self;
 	}
@@ -325,7 +333,7 @@ class DB {
 
 		self::statement();
 
-		self::$sql .= " $column NOT IN (".implode(',', $a).") ";
+		self::$sql .= " $c NOT IN ('".implode('\',\'', $a)."') ";
 
 		return new self;
 	}
@@ -385,15 +393,15 @@ class DB {
 		return new self;
 	}
 
-	static function raw($statement) {
+	static function queryRaw($statement) {
 
 		self::$sql = $statement;
 		return new self;
 	}
 
-	static function whereRaw($statement) {
+	static function raw($statement) {
 
-		if ($statement!=null) self::$sql .= $statement;
+		self::$sql .= $statement;
 		return new self;
 	}
 
