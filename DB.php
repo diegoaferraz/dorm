@@ -184,19 +184,15 @@ class DB {
 		return self::get()[0]->total;
 	}
 
-	static function max($column, $alias=null) {
-
-		$alias = isset($alias) ? $alias : 'max';
+	static function max($column, $alias='max') {
 
 		self::prefix();
-  		echo self::$sql = str_replace('SELECT *', 'SELECT MAX('.$column.') AS '.$alias.' ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT MAX('.$column.') AS '.$alias.' ', self::$sql);
 
 		return self::get()[0]->$alias;
 	}
 
-	static function min($column, $alias=null) {
-
-		$alias = isset($alias) ? $alias : 'min';
+	static function min($column, $alias='min') {
 
 		self::prefix();
   		self::$sql = str_replace('SELECT *', 'SELECT MIN('.$column.') AS '.$alias.' ', self::$sql);
@@ -204,9 +200,7 @@ class DB {
 		return self::get()[0]->$alias;
 	}
 
-	static function avg($column, $alias=null) {
-
-		$alias = isset($alias) ? $alias : 'avg';
+	static function avg($column, $alias='avg') {
 
 		self::prefix();
   		self::$sql = str_replace('SELECT *', 'SELECT AVG('.$column.') AS '.$alias.' ', self::$sql);
@@ -214,14 +208,12 @@ class DB {
 		return self::get()[0]->$alias;
 	}
 
-	static function sum($column, $alias=null) {
-
-		$alias = isset($alias) ? $alias : 'sum';
+	static function sum($column, $alias='sum') {
 
   		self::prefix();
-  		self::$sql = str_replace('SELECT *', 'SELECT SUM('.$column.') AS '.$name.' ', self::$sql);
+  		self::$sql = str_replace('SELECT *', 'SELECT SUM('.$column.') AS '.$alias.' ', self::$sql);
 
-		return self::get()[0]->$name;
+		return self::get()[0]->$alias;
 	}
 
 	static function join($table, $column, $column2, $operator=null) {
